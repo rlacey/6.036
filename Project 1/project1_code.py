@@ -80,6 +80,32 @@ def averager(feature_matrix, labels):
 
     return theta_vector
 
+def train_perceptron(feature_matrix, labels):
+    """
+      Implements the perceptron classifier penalizes misclassified points.
+      Inputs are an (m, n) matrix (m data points and n features) and a length m label vector. 
+      Returns a length-n theta vector and offset. 
+    """
+    (nsamples, nfeatures) = feature_matrix.shape
+    theta_vector = np.zeros([nfeatures])
+    theta_0 = 0
+    
+    misclassification = True
+
+    while(misclassification):
+        for i in range(0, nsamples):
+            label = labels[i]
+            feature_vector = feature_matrix[i, :]
+            perceptron_output = np.dot(theta_vector, feature_vector) + theta_0            
+            if (label * perceptron_output <= 0):
+                theta_vector = theta_vector + label * feature_vector
+                theta_0 = theta_0 + label
+                misclassification = True        
+        misclassification = False
+        
+    return theta_vector, theta_0
+    
+    
 def read_vector_file(fname):
     """
       Reads and returns a vector from a file. 
@@ -106,6 +132,26 @@ def perceptron_classify(feature_matrix, theta_0, theta_vector):
             label_output[i] = -1
 
     return label_output
+                 
+def cross_validation(feature_matrix, labels, k):
+    (nsamples, nfeatures) = feature_matrix.shape
+    nlabels = len(labels)
+    percentages = []
+    for i in xrange(nsamples):
+        cross_feature_matrix = feature_matrix.copy()
+        cross_labels = labels.copy()
+        for j in range(k):
+            cross_feature_matrix = np.delete(feature_matrix, (i), 0)
+            cross_labels = np.delete(labels, (i), 0)
+        theta_vector, theta_0 = train_perceptron(cross_feature_matrix, cross_labels)
+        label_output = perceptron_classify(cross_feature_matrix, theta_0, theta_vector)
+        correct = 0
+        for i in xrange(0, len(label_output)):
+            if(label_output[i] == labels[i]):
+                correct = correct + 1        
+        percentages.append(100.0 * correct / len(label_output))
+    return sum(percentages) / len(percentages)
+
 
 def write_label_answer(vec, outfile):
     """
