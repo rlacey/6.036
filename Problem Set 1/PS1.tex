@@ -64,7 +64,12 @@
 	\item[(c)] 
 		        The range of possible separators is much smaller in part (b) than in part (a), which increases the likelihood of the perceptron algorithm requiring a high number of iterations. Starting with $x^{(2)}$ we do not see this issue because the resulting decision boundary immediately and perfectly separates the data points. Starting with $x^{(1)}$, on the other hand, we see how the smaller changes in the slope of the decision boundary with $x^{(3)}$ at [10, 1] has a large impact on the performance of the algorithm, taking three times as many iterations as with $x^{(3)}$ at [1.5, 1].
 	\item[(d)] 
-		        An adversary would have to goals to maximize the amount of mistakes made by the perceptron algorithm. One is minimize the margin between differently labeled points. Since the coordinates of all the points are known, the labels can be assigned in such a way to cluster together different labels while maintaining a system that is linearly separable. The other goal of the adversary is to try to prevent the algorithm from making small incremental adjustments to the boundary and instead try to make the boundary jump. To achieve this we order the traversal of points in increasing distance from the origin. This causes the later points to still potentially have significant sway on $\theta$ with the hope being that the jumps will cause misclassification of points that were previously fixed.
+		        An adversary maximizes potential errors with the following strategy (maximizing $\frac{R^2}{\gamma^2}$):
+		        \begin{itemize}
+		          \item Spread the points out over a large area, thereby increasing $R$.
+		          \item Assign labels to points in a manner that minimizes the margin between differently labeled points, thereby reducing $\gamma$. 
+		          \item Traverse the points in order from further from the origin to nearest. This will cause the large magnitude vectors to have a strong influence at the beginning of the algorithm making the boundary line jump. Then the near vectors, which have much less of an effect on $\theta$ due to their comparably small magnitude, will have difficultly in nudging the decision boundary to an acceptable position, ideally causing further iterations of the algorithm.
+		        \end{itemize}
 	\end{enumerate}
 
 \bigskip
@@ -86,7 +91,7 @@
 	\item 
 		  The decision boundaries will not necessarily have the same performance on the test data. Let us assume we have some test data that is linearly separable along the $x_1$ axis. In this case the first decision 		boundary from part (a) would perfectly classify the data, while the second boundary is apt to incorrectly predict several points.  
 	\item 
-		   $\theta = \left[ \begin{smallmatrix} -4\\2 \end{smallmatrix} \right]$ and $\theta_0 = -1$
+		   $\theta = \left[ \begin{smallmatrix} -3\\2 \end{smallmatrix} \right]$ and $\theta_0 = -2$
 	\end{enumerate}
 
 \bigskip
@@ -95,8 +100,8 @@
 	\begin{enumerate}
 	\item
 		\begin{enumerate}
-		\item Such a $\theta$ would occur when the dot product is zero.
-		\item PLACEHOLDER
+		\item No such $\theta$ could exist because the dot product with $x$ would always be zero, thus making the second constraint unsatisfiable.
+		\item Yes, the addition of the offset parameter would allow us to satisfy both constraints.
 		\end{enumerate}
 	\item
 		\begin{enumerate}
@@ -119,8 +124,11 @@
 	\item
 		  $A = \left[ \begin{smallmatrix} 
 		       \frac{1}{6} & \frac{1}{6} & \frac{1}{6} & \frac{1}{6} & \frac{1}{6} & \frac{1}{6}\\
-		                1  &          1  &          1  &         -1  &         -1  &         -1 \end{smallmatrix} \right]$
-	\item pl
+		       \frac{1}{3} & \frac{1}{3} & \frac{1}{3} &-\frac{1}{3} &-\frac{1}{3} &-\frac{1}{3} \end{smallmatrix} \right]$
+	\item placeholderB
+	\item placeholderC
+	\item placeholderD
+	\item placeholderE
 	\end{enumerate}
 
 \bigskip
@@ -133,6 +141,8 @@
 		  Only measuring performance by the training set also leads to a tendency of overfitting to the training data. Because of this, even with training data that is fairly representative of population data, the predictions may not generalize well.
 	\item 
 		  The perceptron algorithm would be ran on $n-1$ points $n$ number of times, each time leaving out one of the training points to use as the test. The goal of cross validation is to test how well the classifier generalizes and about how often it is expected to misclassify data from the test set. If the training data is drawn from and is representative of the population being studied, then cross validation should show errors about as often as test set validation. The advantage, however, is that cross validation requires less data to be collected since data points are reused from training for testing. 
+	\item 
+		  A large number of cross validation errors with a low number of training set errors suggests that the boundary decision resulting from the learning algorithm overfit to the training set. One possible solution would be to take the best decision boundary that resulted from the data points subsets of the cross validation runs. 
 	\end{enumerate}
 
 \end{enumerate}
