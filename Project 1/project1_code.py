@@ -16,14 +16,14 @@ def extract_dictionary(file):
     """
       Given a text file, returns a dictionary of unique words.
       Each line is passed into extract_words, and a list on unique
-      words is maintained. 
+      words is maintained.
     """
     dict = []
-    
+
     f = open(file, 'r')
     for line in f:
         flist = extract_words(line)
-        
+
         for word in flist:
             if(word not in dict):
                 dict.append(word)
@@ -36,7 +36,7 @@ def extract_feature_vectors(file, dict):
     """
       Returns a bag-of-words representation of a text file, given a dictionary.
       The returned matrix is of shape (m, n), where the text file has m non-blank
-      lines, and the dictionary has n entries. 
+      lines, and the dictionary has n entries.
     """
     f = open(file, 'r')
     num_lines = 0
@@ -51,7 +51,7 @@ def extract_feature_vectors(file, dict):
 
     f = open(file, 'r')
     pos = 0
-    
+
     for line in f:
         if(line.strip()):
             flist = extract_words(line)
@@ -59,16 +59,16 @@ def extract_feature_vectors(file, dict):
                 if(word in dict):
                     feature_matrix[pos, dict.index(word)] = 1
             pos = pos + 1
-            
+
     f.close()
-    
+
     return feature_matrix
 
 def averager(feature_matrix, labels):
     """
       Implements a very simple classifier that averages the feature vectors multiplied by the labels.
-      Inputs are an (m, n) matrix (m data points and n features) and a length m label vector. 
-      Returns a length-n theta vector (theta_0 is 0). 
+      Inputs are an (m, n) matrix (m data points and n features) and a length m label vector.
+      Returns a length-n theta vector (theta_0 is 0).
     """
     (nsamples, nfeatures) = feature_matrix.shape
     theta_vector = np.zeros([nfeatures])
@@ -83,32 +83,32 @@ def averager(feature_matrix, labels):
 def train_perceptron(feature_matrix, labels):
     """
       Implements the perceptron classifier penalizes misclassified points.
-      Inputs are an (m, n) matrix (m data points and n features) and a length m label vector. 
-      Returns a length-n theta vector and offset. 
+      Inputs are an (m, n) matrix (m data points and n features) and a length m label vector.
+      Returns a length-n theta vector and offset.
     """
     (nsamples, nfeatures) = feature_matrix.shape
     theta_vector = np.zeros([nfeatures])
     theta_0 = 0
-    
+
     misclassification = True
 
     while(misclassification):
         for i in range(0, nsamples):
             label = labels[i]
             feature_vector = feature_matrix[i, :]
-            perceptron_output = np.dot(theta_vector, feature_vector) + theta_0            
+            perceptron_output = np.dot(theta_vector, feature_vector) + theta_0
             if (label * perceptron_output <= 0):
                 theta_vector = theta_vector + label * feature_vector
                 theta_0 = theta_0 + label
-                misclassification = True        
+                misclassification = True
         misclassification = False
-        
+
     return theta_vector, theta_0
-    
-    
+
+
 def read_vector_file(fname):
     """
-      Reads and returns a vector from a file. 
+      Reads and returns a vector from a file.
     """
     return np.genfromtxt(fname)
 
@@ -117,7 +117,7 @@ def perceptron_classify(feature_matrix, theta_0, theta_vector):
       Classifies a set of data points given a weight vector and offset.
       Inputs are an (m, n) matrix of input vectors (m data points and n features),
       a real number offset, and a length n parameter vector.
-      Returns a length m label vector. 
+      Returns a length m label vector.
     """
     (nsamples, nfeatures) = feature_matrix.shape
     label_output = np.zeros([nsamples])
@@ -132,23 +132,20 @@ def perceptron_classify(feature_matrix, theta_0, theta_vector):
             label_output[i] = -1
 
     return label_output
-                 
+
 def cross_validation(feature_matrix, labels, k):
     (nsamples, nfeatures) = feature_matrix.shape
     nlabels = len(labels)
     percentages = []
     for i in xrange(nsamples):
-        cross_feature_matrix = feature_matrix.copy()
-        cross_labels = labels.copy()
-        for j in range(k):
-            cross_feature_matrix = np.delete(feature_matrix, (i), 0)
-            cross_labels = np.delete(labels, (i), 0)
+        cross_feature_matrix = np.concatenate((feature_matrix[:i], feature_matrix[i+k:]))
+        cross_labels = np.concatenate((labels[:i], labels[i+k:]))
         theta_vector, theta_0 = train_perceptron(cross_feature_matrix, cross_labels)
         label_output = perceptron_classify(cross_feature_matrix, theta_0, theta_vector)
         correct = 0
         for i in xrange(0, len(label_output)):
             if(label_output[i] == labels[i]):
-                correct = correct + 1        
+                correct = correct + 1
         percentages.append(100.0 * correct / len(label_output))
     return sum(percentages) / len(percentages)
 
@@ -159,7 +156,7 @@ def write_label_answer(vec, outfile):
       The vector must be of shape (70, ) or (70, 1),
       i.e., 70 rows, or 70 rows and 1 column.
     """
-    
+
     if(vec.shape[0] != 70):
         print("Error - output vector should have 70 rows.")
         print("Aborting write.")
@@ -170,9 +167,9 @@ def write_label_answer(vec, outfile):
             print("Invalid value in input vector.")
             print("Aborting write.")
             return
-        
+
     np.savetxt(outfile, vec)
-        
+
 
 def plot_2d_examples(feature_matrix, labels, theta_0, theta):
     """
@@ -180,13 +177,13 @@ def plot_2d_examples(feature_matrix, labels, theta_0, theta):
       a decision boundary line.
       Inputs: an (m, 2) feature_matrix (m data points each with
       2 features), a length-m label vector, and hyper-plane
-      parameters theta_0 and length-2 vector theta. 
+      parameters theta_0 and length-2 vector theta.
     """
-    
+
     cols = []
     xs = []
     ys = []
-    
+
     for i in xrange(0, len(labels)):
         if(labels[i] == 1):
             cols.append('b')
