@@ -12,6 +12,26 @@ def extract_words(input_string):
 
     return input_string.lower().split()
 
+def extract_set(file):
+    """
+      Given a text file, returns a dictionary of unique words.
+      Each line is passed into extract_words, and a list on unique
+      words is maintained.
+    """
+    s = set([])
+
+    f = open(file, 'r')
+    for line in f:
+        flist = extract_words(line)
+
+        for word in flist:
+            if(word not in s):
+                s.add(word)
+
+    f.close()
+
+    return s
+
 def extract_dictionary(file):
     """
       Given a text file, returns a dictionary of unique words.
@@ -64,6 +84,41 @@ def extract_feature_vectors(file, dict):
 
     return feature_matrix
 
+def extract_feature_vectors_with_keywords(file, dict, keys):
+    """
+      Returns a bag-of-words representation of a text file, given a dictionary.
+      The returned matrix is of shape (m, n), where the text file has m non-blank
+      lines, and the dictionary has n entries.
+    """
+    f = open(file, 'r')
+    num_lines = 0
+
+    for line in f:
+        if(line.strip()):
+            num_lines = num_lines + 1
+
+    f.close()
+
+    feature_matrix = np.zeros([num_lines, len(dict)])
+
+    f = open(file, 'r')
+    pos = 0
+
+    for line in f:
+        if(line.strip()):
+            flist = extract_words(line)
+            for word in flist:
+                if(word in dict):
+                    if word in keys:
+                        feature_matrix[pos, dict.index(word)] = 2
+                    else:
+                        feature_matrix[pos, dict.index(word)] = 1
+            pos = pos + 1
+
+    f.close()
+
+    return feature_matrix
+
 def averager(feature_matrix, labels):
     """
       Implements a very simple classifier that averages the feature vectors multiplied by the labels.
@@ -72,13 +127,14 @@ def averager(feature_matrix, labels):
     """
     (nsamples, nfeatures) = feature_matrix.shape
     theta_vector = np.zeros([nfeatures])
+    theta_0 = 0
 
     for i in xrange(0, nsamples):
         label = labels[i]
         sample_vector = feature_matrix[i, :]
         theta_vector = theta_vector + label*sample_vector
-
-    return theta_vector
+        theta_0 = theta_0 + label
+    return theta_vector, theta_0
 
 def train_perceptron(feature_matrix, labels):
     """
@@ -90,9 +146,12 @@ def train_perceptron(feature_matrix, labels):
     theta_vector = np.zeros([nfeatures])
     theta_0 = 0
 
+    counter = 0
     misclassification = True
 
-    while(misclassification):
+    while(misclassification and counter < 5000):
+        misclassification = False
+        counter += 1
         for i in range(0, nsamples):
             label = labels[i]
             feature_vector = feature_matrix[i, :]
@@ -101,10 +160,23 @@ def train_perceptron(feature_matrix, labels):
                 theta_vector = theta_vector + label * feature_vector
                 theta_0 = theta_0 + label
                 misclassification = True
-        misclassification = False
-
     return theta_vector, theta_0
 
+def train_passive_agressive(feature_matrix, labels, T):
+    (nsamples, nfeatures) = feature_matrix.shape
+    theta_vector = np.zeros([nfeatures])
+    theta_0 = 0
+
+    for t in xrange(T):
+        for i in range(0, nsamples):
+            label = labels[i]
+            feature_vector = feature_matrix[i, :]
+            loss = 1 - label * (np.dot(theta_vector, feature_vector) + theta_0) if label * (np.dot(theta_vector, feature_vector) + theta_0) <= 1 else 0
+            mag  = feature_vector.dot(feature_vector) + 1
+            alpha = loss / mag
+            theta_vector = theta_vector + alpha * label * feature_vector
+            theta_0 = theta_0 + alpha * label
+    return theta_vector, theta_0
 
 def read_vector_file(fname):
     """
@@ -133,20 +205,41 @@ def perceptron_classify(feature_matrix, theta_0, theta_vector):
 
     return label_output
 
-def cross_validation(feature_matrix, labels, k):
+def cross_validation(feature_matrix, labels, k, flag = 0, T = 100):
+    """
+        Runs k-fold cross validation on feature matrix.
+        Flag  0 : averager
+              1 : perceptron
+              2 : passive agressive
+        Returns average percentage of correctly labeled points.
+    """
     (nsamples, nfeatures) = feature_matrix.shape
     nlabels = len(labels)
+    subset_size = nsamples / k
     percentages = []
-    for i in xrange(nsamples):
-        cross_feature_matrix = np.concatenate((feature_matrix[:i], feature_matrix[i+k:]))
-        cross_labels = np.concatenate((labels[:i], labels[i+k:]))
-        theta_vector, theta_0 = train_perceptron(cross_feature_matrix, cross_labels)
-        label_output = perceptron_classify(cross_feature_matrix, theta_0, theta_vector)
+
+    for i in xrange(k):
+        cross_feature_matrix = np.concatenate((feature_matrix[:i*subset_size], feature_matrix[(i+1)*subset_size:]))
+        cross_labels = np.concatenate((labels[:i*subset_size], labels[(i+1)*subset_size:]))
+        test_matrix = feature_matrix[i*subset_size:(i+1)*subset_size]
+        test_labels = labels[i*subset_size:(i+1)*subset_size]
+
+        if flag == 0:
+            theta_vector, theta_0 = averager(cross_feature_matrix, cross_labels)
+        elif flag == 1:
+            theta_vector, theta_0 = train_perceptron(cross_feature_matrix, cross_labels)
+        elif flag == 2:
+            theta_vector, theta_0 = train_passive_agressive(cross_feature_matrix, cross_labels, T)
+
+        label_output = perceptron_classify(test_matrix, theta_0, theta_vector)
+
         correct = 0
         for i in xrange(0, len(label_output)):
-            if(label_output[i] == labels[i]):
+            if(label_output[i] == test_labels[i]):
                 correct = correct + 1
+
         percentages.append(100.0 * correct / len(label_output))
+
     return sum(percentages) / len(percentages)
 
 
@@ -171,7 +264,7 @@ def write_label_answer(vec, outfile):
     np.savetxt(outfile, vec)
 
 
-def plot_2d_examples(feature_matrix, labels, theta_0, theta):
+def plot_2d_examples(feature_matrix, labels, theta_0, theta, title = None):
     """
       Uses Matplotlib to plot a set of labeled instances, and
       a decision boundary line.
@@ -207,5 +300,8 @@ def plot_2d_examples(feature_matrix, labels, theta_0, theta):
             liney.append(0)
 
     plt.plot(linex, liney, 'k-')
+
+    if title:
+        plt.title(title)
 
     plt.show()
