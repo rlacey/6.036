@@ -7,6 +7,7 @@ import project1_code as p1
 adjectives = p1.extract_set('adjectives.txt')
 dictionary = p1.extract_dictionary('train-tweet.txt')
 labels = p1.read_vector_file('train-answer.txt')
+# feature_matrix = p1.extract_feature_vectors('train-tweet.txt', dictionary)
 feature_matrix = p1.extract_feature_vectors_with_keywords('train-tweet.txt', dictionary, adjectives)
 ######################
 # AVERAGER
