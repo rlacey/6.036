@@ -7,7 +7,8 @@ import project1_code as p1
 adjectives = p1.extract_set('adjectives.txt')
 dictionary = p1.extract_dictionary('train-tweet.txt')
 labels = p1.read_vector_file('train-answer.txt')
-feature_matrix = p1.extract_feature_vectors_with_keywords('train-tweet.txt', dictionary, adjectives)
+feature_matrix = p1.extract_feature_vectors('train-tweet.txt', dictionary)
+# feature_matrix = p1.extract_feature_vectors_with_keywords('train-tweet.txt', dictionary, adjectives)
 ######################
 # AVERAGER
 ######################
@@ -27,6 +28,9 @@ print("Averager gets " + str(percentage_correct) + "% correct (" + str(correct) 
 ######################
 perceptron_theta, perceptron_theta_0 = p1.train_perceptron(feature_matrix, labels)
 label_output = p1.perceptron_classify(feature_matrix, perceptron_theta_0, perceptron_theta)
+
+print 'Size', len(dictionary)
+print 'T_0', perceptron_theta_0
 
 correct = 0
 for i in xrange(0, len(label_output)):

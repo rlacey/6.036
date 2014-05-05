@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import sklearn
 import sklearn.svm
-import time
-import random
 from sklearn.svm import SVC
 
 # Returns
@@ -16,7 +14,7 @@ from sklearn.svm import SVC
 
 # Warning: this will take a long time the first time you run it.  It
 # will download data onto your disk, but then will use the local copy
-# thereafter.  
+# thereafter.
 def getData():
     global X, n, d, y, h, w
     lfw_people = fetch_lfw_people(min_faces_per_person=40, resize=0.4)
@@ -69,12 +67,12 @@ def plotGallery(images, title='plot', subtitles = [],
         if subtitles:
             plt.title(subtitles[i], size=12)
         plt.xticks(())
-        plt.yticks(())    
-    
+        plt.yticks(())
+
 # Perform PCA, optionally apply the "sphering" or "whitening" transform, in
 # which each eigenvector is scaled by 1/sqrt(lambda) where lambda is
 # the associated eigenvalue.  This has the effect of transforming the
-# data not just into an axis-aligned ellipse, but into a sphere.  
+# data not just into an axis-aligned ellipse, but into a sphere.
 # Input:
 # - X: n by d array representing n d-dimensional data points
 # Output:
@@ -131,12 +129,10 @@ def limitPics(X, y, classes, nim):
 def cheatInit(X, y, k):
     (n, d) = X.shape
     init = np.zeros((k, d), dtype=float)
-    indecies = [0]*k
     for i in range(k):
         (index, dist) = cheatIndex(X, y, i, l2Sq)
         init[i] = X[index]
-        indecies[i] = index
-    return init, indecies
+    return init
 
 def l2Sq (x,y):
     return np.sum(np.dot((x-y), (x-y).T))
@@ -171,8 +167,8 @@ def scoreMedoids(clustering, y):
     n = cluster.shape[0]                  # how many samples
     # The actual label for each medoid, which we associate with
     # samples in cluster
-    medoidLabels = np.array([y[i] for i in mIndex]) 
-    #print medoidLabels
+    medoidLabels = np.array([y[i] for i in mIndex])
+    print medoidLabels
     count = len(set(medoidLabels.tolist())) # how many actual people predicted
     # For each sample, what is the label implied by its cluster
     clusterLabels = np.array([medoidLabels[c] for c in cluster])
@@ -180,182 +176,4 @@ def scoreMedoids(clustering, y):
                  for i in xrange(n)])/float(n)
     return score
 
-## INTIALIZATION
-X,y=getData()
-
-## PROBLEM 4
-def reconstruct(l):
-    E, mu = PCA(X)
-    Z = X.dot(E[:, 0:l])
-    reconstructed = Z.dot(E.T[0:l])
-    plotGallery([reconstructed[i] for i in range(12)])
-
-## PROBLEM 5
-def dataRangeC():
-    Cs = np.arange(0.001,10,0.2)
-    testingError = []
-    trainingError = []
-    E, mu = PCA(X, True)
-    Z = X.dot(E[:, 0:100])
-    newY = [+1 if yi == 4 else -1 for yi in y]
-    (X1, X2, y1, y2) = sklearn.cross_validation.train_test_split(Z, newY, test_size=.75)
-    for C in Cs:
-        clf = SVC(kernel='linear', C=C)
-        clf.fit(X1, y1)
-        score = clf.score(X2, y2)
-        testingError.append(1-score)
-        score = clf.score(X1, y1)
-        trainingError.append(1-score)
-    return Cs, testingError, trainingError
-
-## PROBLEM 6
-def dataRangeComponent():
-    Ls = np.arange(1,300,10)
-    testingError = []
-    trainingError = []
-    E, mu = PCA(X, True)
-    newY = [+1 if yi == 4 else -1 for yi in y]
-    for L in Ls:
-        Z = X.dot(E[:, 0:L])
-        (X1, X2, y1, y2) = sklearn.cross_validation.train_test_split(Z, newY, test_size=.75)
-        clf = SVC(kernel='linear', C=100)
-        clf.fit(X1, y1)
-        score = clf.score(X2, y2)
-        testingError.append(1-score)
-        score = clf.score(X1, y1)
-        trainingError.append(1-score)
-    return Ls, testingError, trainingError
-
-## PROBLEM 7    
-def ml_k_means(X, init):
-    number_of_points = len(X)
-    number_of_clusters = len(init)
-    centroids = init.astype(float)
-    clusterAssignments = np.array([0]*number_of_points)
-    totalCost = float('inf')
-    costs = np.array([float('inf')]*number_of_points)
-    # Set initial closest representitive for every point
-    for i in range(number_of_points):
-        for j in range(number_of_clusters):
-            pointCost = np.linalg.norm(X[i]-centroids[j])
-            if pointCost <  costs[i]:
-                clusterAssignments[i] = j
-                costs[i] = pointCost 
-    # Move representitive to center of cluster and reassign points
-    while True:                            
-        for j in range(number_of_clusters):
-            points_in_cluster = np.array([x for i, x in enumerate(X) if clusterAssignments[i]==j])
-            cluster_sum = np.sum(points_in_cluster, axis=0)
-            centroids[j] = cluster_sum / float(len(points_in_cluster))
-        costs = np.array([float('inf')]*number_of_points)
-        for i in range(number_of_points):
-            for j in range(number_of_clusters):
-                pointCost = np.linalg.norm(X[i]-centroids[j])
-                if pointCost <  costs[i]:
-                    clusterAssignments[i] = j
-                    costs[i] = pointCost                 
-        newCost = np.sum(costs)
-        if newCost == totalCost:
-            break
-        totalCost = newCost       
-    return centroids, clusterAssignments
-                
-def sample_clustering():
-    dataPoints = np.array([[1.0,1.0], [1.0,3.0], [2.0,4.0], [3.0,3.0], [3.0,1.0], [7.0,9.0], [8.0,10.0], [9.0,9.0], [1.0,1.0], [3.0,2.0], [7.0,8.0], [9.0,2.0], [10.0,2.0], [8.0,8.0], [8.0,1.0], [10.0,3.0]])
-    initialPoints = np.array([[4,1], [4,4], [1,2]])
-    centroids, clusters = ml_k_means(dataPoints, initialPoints)
-    return centroids, clusters
-
-## PROBLEM 8    
-def ml_k_medoids(X, init):
-    number_of_points = len(X)
-    number_of_clusters = len(init)
-    medoids = init.astype(float)
-    clusterAssignments = np.array([0]*number_of_points)
-    totalCost = float('inf')
-    while True:         
-        # Update cluster assignments
-        costs = np.array([float('inf')]*number_of_points)
-        for i in range(number_of_points):
-            for j in range(number_of_clusters):
-                pointCost = np.linalg.norm(X[i]-medoids[j])
-                if pointCost <  costs[i]:
-                    clusterAssignments[i] = j
-                    costs[i] = pointCost                                   
-        newCost = np.sum(costs)
-        if newCost == totalCost:
-            break
-        totalCost = newCost                                          
-        # Choose new exemplars    
-        costs = np.array([float('inf')]*number_of_clusters)                      
-        for j in range(number_of_clusters):
-            points_in_cluster = np.array([x for i, x in enumerate(X) if clusterAssignments[i]==j])
-            for proposed in points_in_cluster:
-                cost = 0
-                for x in points_in_cluster:
-                    cost += np.linalg.norm(proposed-x)
-                if cost < costs[j]:
-                    medoids[j] = proposed
-                    costs[j] = cost     
-    return medoids, clusterAssignments
-            
-def sample_medoids():
-    dataPoints = np.array([[1.0,1.0], [1.0,3.0], [2.0,4.0], [3.0,3.0], [3.0,1.0], [7.0,9.0], [8.0,10.0], [9.0,9.0], [1.0,1.0], [3.0,2.0], [7.0,8.0], [9.0,2.0], [10.0,2.0], [8.0,8.0], [8.0,1.0], [10.0,3.0]])
-    initialPoints = np.array([[1.0,3.0], [2.0,4.0], [3.0,3.0]])
-    metroids, clusters = ml_k_medoids(dataPoints, initialPoints)
-    return metroids, clusters                
-            
-            
-def cheatScoring():
-    X1, y1 = limitPics(X, y, [4, 13], 40)
-    init, indecies = cheatInit(X1, y1, 2)
-    medoids, clusters = ml_k_medoids(X1, init)
-    return scoreMedoids((medoids, indecies, clusters), y1)
-    
-def randomScoring():
-    X1, y1 = limitPics(X, y, [4, 13], 40)
-    r1 = int(random.random()*X1.shape[0])
-    r2 = int(random.random()*X1.shape[0])
-    init = np.array([X1[r1], X1[r2]])
-    medoids, clusters = ml_k_medoids(X1, init)
-    indecies = [None, None]
-    for i, x in enumerate(X1):
-        if np.array_equal(x, medoids[0]): indecies[0] = i
-        if np.array_equal(x, medoids[1]): indecies[1] = i
-    return scoreMedoids((medoids, indecies, clusters), y1)
-
-## PROBLEM 9
-def pcaScoring():
-    E, mu = PCA(X)
-    Ls = np.arange(1,40,2)
-    scores = []
-    for L in Ls:
-        Z = X.dot(E[:, 0:L])
-        X1, y1 = limitPics(Z, y, [4, 13], 40)
-        init, indecies = cheatInit(X1, y1, 2)
-        medoids, clusters = ml_k_medoids(X1, init)
-        scores.append(scoreMedoids((medoids, indecies, clusters), y1))
-    plt.figure("PCA Scoring") 
-    plt.plot(Ls, scores)
-    return scores
-    
-## PROBLEM 10
-def pairsScoring():
-    hardestScore = 1
-    easiestScore = 0
-    hardest = [None, None]
-    easiest = [None, None]
-    for i in range(19):
-        for j in range(19): 
-            if i != j:       
-                X1, y1 = limitPics(X, y, [i, j], 40)
-                init, indecies = cheatInit(X1, y1, 2)
-                medoids, clusters = ml_k_medoids(X1, init)
-                score = scoreMedoids((medoids, indecies, clusters), y1)
-                if score < hardestScore:
-                    hardestScore = score
-                    hardest = [i, j]
-                if score > easiestScore:
-                    easiestScore = score
-                    easiest = [i, j]           
-    return hardest, easiest
+X,y = getData()

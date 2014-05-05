@@ -37,34 +37,33 @@ def noisy_quad_fit(order, Lambda, n_train=20, n_test=81):
     predict_yt = np.dot(Xt,theta);
     print 'Testing Error = ', np.max(np.abs(yt - predict_yt));
 
-    # plt.plot(train_x, y, 'ro');
-    # plt.plot(train_x, predict_y, 'rx');
-    # plt.plot(test_x, predict_yt, 'bx');
-    # plt.show();
-    return (np.max(np.abs(y - predict_y)), np.max(np.abs(yt - predict_yt)))
+    plt.plot(train_x, y, 'ro');
+    plt.plot(train_x, predict_y, 'rx');
+    plt.plot(test_x, predict_yt, 'bx');
+    plt.show();
+    # return (np.max(np.abs(y - predict_y)), np.max(np.abs(yt - predict_yt)))
 
-trainingError = 1
-minTrainI = 0
-minTrainJ = 0
-testingError = 1
-minTestI = 0
-minTestJ = 0
+# trainingError = 1
+# minTrainI = 0
+# minTrainJ = 0
+# testingError = 1
+# minTestI = 0
+# minTestJ = 0
 
-lambdas = [0.000001, 0.000005, 0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
-for i in range(2,19):
-    for j, l in enumerate(lambdas):
-        trainError, testError = noisy_quad_fit(i, l)
-        if trainError < trainingError:
-            trainingError = trainError
-            minTrainI = i
-            minTrainJ  = j
-        if testError < testingError:
-            testingError = testError
-            minTestI = i
-            minTestJ = j
+# lambdas = [0.000001, 0.000005, 0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+# for i in range(2,19):
+#     for j, l in enumerate(lambdas):
+#         trainError, testError = noisy_quad_fit(i, l)
+#         if trainError < trainingError:
+#             trainingError = trainError
+#             minTrainI = i
+#             minTrainJ  = j
+#         if testError < testingError:
+#             testingError = testError
+#             minTestI = i
+#             minTestJ = j
 
-print "Minimum training error:", trainingError, "at i=", minTrainI, "j=", minTrainJ, lambdas[minTrainJ]
-print "Minimum testing error:", testingError, "at i=", minTestI, "j=", minTestJ, lambdas[minTestJ]
+# print "Minimum training error:", trainingError, "at i=", minTrainI, "j=", minTrainJ, lambdas[minTrainJ]
+# print "Minimum testing error:", testingError, "at i=", minTestI, "j=", minTestJ, lambdas[minTestJ]
 
-# noisy_quad_fit(17, 0.000001)
-# noisy_quad_fit(0, 0.01)
+noisy_quad_fit(13, 0.000001)
